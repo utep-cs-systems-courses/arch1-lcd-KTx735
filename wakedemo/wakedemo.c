@@ -74,6 +74,7 @@ void main()
   switch_init();
   
   enableWDTInterrupts();      /**< enable periodic interrupt */
+
   or_sr(0x8);	              /**< GIE (enable interrupts) */
   
   clearScreen(COLOR_BLUE);
@@ -110,6 +111,7 @@ update_shape()
     if (switches & SW1) red = (red - 3) % 32;
     step ++;
   } else {
+    // col+=5; //Make the object out of the screen
      clearScreen(COLOR_BLUE);
      step = 0;
   }
