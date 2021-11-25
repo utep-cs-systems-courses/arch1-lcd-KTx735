@@ -8,14 +8,16 @@ char button_state;
 char lightstate = 0;
 char state = 0;
 
+//Red at 50%
+//Order: on, off
 void redAt50()
 {
-  switch(state){
+  switch (lightstate) {
   case 0:
     red_on = 1;
     state = 1;
     break;
-  case 2:
+  case 1:
     red_on = 0;
     state = 0;
     break;
@@ -23,9 +25,11 @@ void redAt50()
   led_update();
 }
 
+//Red at 75%
+//Order: on, on, off
 void redAt75()
 {
-  switch(state){
+  switch (lightstate) {
   case 0:
     red_on = 1;
     state = 1;
@@ -40,11 +44,13 @@ void redAt75()
     break;
   }
   led_update();
-}
+}  
 
+//Red at 25%
+//Order: off, off, on
 void redAt25()
 {
-  switch(state){
+  switch (lightstate) {
   case 0:
     red_on = 0;
     state = 1;
@@ -61,6 +67,31 @@ void redAt25()
   led_update();
 }
 
+//changeLight uses the intensity - 50, 75 and 25
+void changeLight()
+{
+  switch (lightstate) {
+  case 0:
+    redAt50();
+    redAt50();
+    state = 1;
+    break;
+  case 1: 
+    redAt75();
+    redAt75();
+    redAt75();
+    state = 2;
+    break;
+  case 2:
+    redAt25();
+    redAt25();
+    redAt25();
+    dim_state = 0;
+    break;
+  }
+}
+
+//Turn green on and turn red off
 void greenOn()
 {
   green_on = 1;
@@ -68,70 +99,17 @@ void greenOn()
   led_update();
 }
 
-void changeLight()
+//Turn red on and turn green off
+void redOn()
 {
-  static char lightState = 0;
-  switch(lightState){
-  case 0:
-    redAt50();
-    redAt50();
-    lightState = 1;
-    break;
-  case 1:
-    redAt75();
-    redAt75();
-    redAt75();
-    lightState = 2;
-    break;
-  case 2:
-    redAt25();
-    redAt25();
-    redAt25();
-    lightState = 0;
-      break;
-  }
+  red_on = 1;
+  green_on = 0;
+  led_update();
 }
 
-//Complex test
-/*
-void soundFromHell()
-{
-  static char note_state = 0;
-  switch(note_state){
-  case 0:
-    buzzer_set_period(2551);
-      note_state++;
-      break;
-  case 2:
-    buzzer_set_period(3822);
-    note_state++;
-    break;
-  case 6:
-    buzzer_set_period(5000);
-    note_state++;
-    break;
-  case 10:
-    buzzer_set_period(3405);
-    note_state++;
-    break;
-  case 11:
-    buzzer_set_period(5000);
-    note_state++;
-    break;
-  case 15:
-    buzzer_set_period(2551);
-    note_state++;
-    break;
-  case 16:
-    buzzer_set_period(3405);
-    note_state = 0;
-    break;
-  }
-}
-*/
-
+//Frequency is raised
 void soundUp()
-{ //frequency is raised
+{
   static long cycle = 5000;
   buzzer_set_period(cycle);
   cycle = cycle - 10;
@@ -140,8 +118,9 @@ void soundUp()
   }
 }
 
+//Frequency is lowered
 void soundDown()
-{ // frequency is lowered
+{
   static long cycle = 0;
   buzzer_set_period(cycle);
   cycle = cycle + 10;

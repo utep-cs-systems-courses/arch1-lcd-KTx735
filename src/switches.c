@@ -28,20 +28,20 @@ switch_init()			/* setup switch */
 }
 
 void
-switch_interrupt_handler()
-{
-  char p2val = switch_update_interrupt_sense();
-  
-  if ((p2val & SW1) == 0){
-    button_state = 0;
-  }
-  else if ((p2val & SW2) == 0){
-    button_state = 1;
-  }
-  else if ((p2val & SW3) == 0){
-    button_state = 2;
-  }
-  else if ((p2val & SW4) == 0){
-    button_state = 3;
+switch_interrupt_handler(){
+  char p2val = checkSwitches();
+  //set the value of state to the corresponding switch that is pressed
+  char state = (p2val & SW1) ? 0 : 1;
+  if (state == 0) state = (p2val & SW2) ? 0 : 2;
+  if (state == 0) state = (p2val & SW3) ? 0 : 3;
+  if (state == 0) state = (p2val & SW4) ? 0 : 4;
+  stateChange(state);
+}
+
+void
+__interrupt_vec(PORT2_VECTOR) Port_2(){
+  if (P2IFG & SWITCHES) {      /* did a button cause this interrupt? */
+    P2IFG &= ~SWITCHES;      /* clear pending sw interrupts */
+    switch_interrupt_handler();/* single handler for all switches */
   }
 }
