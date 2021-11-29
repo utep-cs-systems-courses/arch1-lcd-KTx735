@@ -1,16 +1,23 @@
-all:
-	(cd timerLib; make install)
-	(cd lcdLib; make install)
-	(cd wakedemo; make)
-	(cd circledemo; make)
+# makfile configuration
 
-doc:
-	rm -rf doxygen_docs
-	doxygen Doxyfile
+CPU             	= msp430g2553
+CFLAGS          	= -mmcu=${CPU} -Os -I../h
+LDFLAGS		= -L../lib -L/opt/ti/msp430_gcc/include/
+
+#switch the compiler (for the internal make rules)
+CC              = msp430-elf-gcc
+AS              = msp430-elf-gcc -mmcu=${CPU} -c
+
+all:wakedemo-c.elf
+
+wakedemo-c.elf: ${COMMON_OBJECTS} wakedemo.o wdt_handler.o buzzer.o led_controller.o
+	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ -lTimer -lLcd
+
+load: wakedemo-c.elf
+	msp430loader.sh $^
+
 clean:
-	(cd timerLib; make clean)
-	(cd lcdLib; make clean)
-	(cd circledemo; make clean)
-	(cd wakedemo; make clean)
-	rm -rf lib h
-	rm -rf doxygen_docs/*
+	rm -f *.o *.elf
+
+buzzer.o: buzzer.h
+led_controller.o: led.h

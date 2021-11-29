@@ -134,39 +134,48 @@ void main()
 void
 draw_stuff()
 {
-  drawString5x7(10, 20, "Surprise", COLOR_WHITE, COLOR_RED);
-  drawString5x7(10, 40, "Change", COLOR_WHITE, COLOR_RED);
+  drawString5x7(10, 20, "LCD", COLOR_WHITE, COLOR_RED);
+  drawString5x7(10, 40, "Draw", COLOR_WHITE, COLOR_RED);
   drawString5x7(10, 60, "Sound", COLOR_WHITE, COLOR_RED);
   drawString5x7(10, 80, "Clear", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,20, "LCD", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,40, "Draw", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,60, "Clear", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,80, "Clear", COLOR_WHITE, COLOR_RED);
+  //drawString11x16(10, 20, "LCD", COLOR_WHITE, COLOR_RED);
+  //drawString11x16(10, 40, "Draw", COLOR_WHITE, COLOR_RED);
+  //drawString11x16(10, 60, "Sound", COLOR_WHITE, COLOR_RED);
+  // drawString11x16(10, 80, "Clear", COLOR_WHITE, COLOR_RED);
 }
 
-unsigned char center = 0;
+//More like blink
+unsigned char move = 50;
 
 void
 update_shape()
 {
   switch (button){
   case 1:
-    if(center <= 60){
-      if(center == 0){
+    if(move <= 100){
+      if(move == 50){
 	clearScreen(COLOR_BLUE);
       }
-      drawDiamond(center, COLOR_YELLOW);
-      center++;
+      drawDiamond(move, COLOR_RED);
+      move++;
     }
     else{
       clearScreen(COLOR_BLUE);
-      center = 0;
+      move = 50;
     }
     break;
   case 2:
-    if(center >= 0 && center <= 60){
-      drawDiamond(center, COLOR_YELLOW);
-      center--;
+    if(move >= 50 && move <= 100){
+      drawDiamond(move, COLOR_RED);
+      move--;
     }
     else{
       clearScreen(COLOR_BLUE);
-      center = 60;
+      move = 100;
     }
   case 3:
     clearScreen(COLOR_BLUE);
@@ -211,6 +220,7 @@ int dim = 0;
 
 //Probably shold change for a real song
 //Nah, leave it as ugly sound
+//Probably need to change notes because it sounds all of them sound simillar
 int noise[] = {5405, 6802, 5102, 6060, 6802, 4049, 5405, 5102, 3610};
 
 void blinkUpdate()
@@ -224,7 +234,7 @@ void blinkUpdate()
 	{
 	  led_controller(1);
 	}
-      else if(dim && blink_limit == 7)
+      else if(dim && blink_limit == 50)
 	{
 	  led_controller(3);
 	}
@@ -244,11 +254,11 @@ void blinkUpdate()
 void blinkCounter()
 {
   second_counter++;
-  if (second_counter >= 250) {
+  if (second_counter >= 3000) {
     second_counter = 0;
     if(!dim){
       blink_limit++;
-      if (blink_limit >= 7){
+      if (blink_limit >= 50){
 	dim = 1;
       }
     }
@@ -261,13 +271,13 @@ void blinkCounter()
   }
 }
 
-//Counter for the led blinks
-//This will count for every second
+//Counter for blinks
+//This will move slow
 void
 counter()
 {
   second_counter++;
-  if(second_counter >= 15)
+  if(second_counter >= 120)
     {
       if(!cpuOff)
 	{
@@ -294,7 +304,7 @@ restart_val()
 
   buzzer_set_period(0);
   led_controller(0);
-  center = 0;
+  move = 50;
   cpuOff = 1;
   if(button == 4){
     clearlcd();
@@ -312,7 +322,7 @@ void update_clear(){
   dim = 0;
 
   if(button == 0 || button > 2){
-    center = 0;
+    move = 50;
   }
   button = 0;
   cpuOff = 1;

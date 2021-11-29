@@ -19,18 +19,18 @@ void drawPixel(u_char col, u_char row, u_int colorBGR)
 
 void drawDiamond(char center, u_int shapeColor)
 {
-  for(u_char r = 0; r < 11; r++0)
+  for(u_char r = 20; r < 41; r++)
     {
-      for(u_char c = 0; c <= r; c++)
+      for(u_char c = 20; c <= r; c++)
 	{
 	drawPixel(center+c, r, shapeColor);
 	drawPixel(center-c, r, shapeColor);
       }
     }
   
-   for(u_char c = 0; c < 11; c++0)
+   for(u_char c = 20; c < 100; c++)
     {
-      for(u_char r = 0; r <= 20; r++)
+      for(u_char r = 20; r <= 41; r++)
 	{
 	drawPixel(center+c, r, shapeColor);
 	drawPixel(center-c, r, shapeColor);
@@ -93,18 +93,40 @@ void drawChar5x7(u_char rcol, u_char rrow, char c,
   }
 }
 
+void drawChar8x12(u_char rcol, u_char rrow, char c, 
+     u_int fgColorBGR, u_int bgColorBGR) 
+{
+  u_char col = 0;
+  u_char row = 0;
+  u_char bit = 128;
+  u_char oc = c - 0x20;
+
+  lcd_setArea(rcol, rrow, rcol + 7, rrow + 12); /* relative to requested col/row */
+  while (row < 13) {
+    while (col < 8) {
+      u_int colorBGR = (font_8x12[oc][col] & bit) ? fgColorBGR : bgColorBGR;
+      lcd_writeColor(colorBGR);
+      bit >>= 1;
+      col++;
+    }
+    bit = 128;
+    col = 0;
+    row++;
+  }
+}
+
 void drawChar11x16(u_char rcol, u_char rrow, char c, 
      u_int fgColorBGR, u_int bgColorBGR) 
 {
   u_char col = 0;
   u_char row = 0;
-  u_char bit = 0x0001;
+  u_char bit = 1;
   u_char oc = c - 0x20;
 
   lcd_setArea(rcol, rrow, rcol + 10, rrow + 16); /* relative to requested col/row */
   while (row < 17) {
     while (col < 11) {
-      u_int colorBGR = (font_5x7[oc][col] & bit) ? fgColorBGR : bgColorBGR;
+      u_int colorBGR = (font_11x16[oc][col] & bit) ? fgColorBGR : bgColorBGR;
       lcd_writeColor(colorBGR);
       col++;
     }
@@ -136,12 +158,22 @@ void drawString5x7(u_char col, u_char row, char *string,
   }
 }
 
+void drawString8x12(u_char col, u_char row, char *string,
+		     u_int fgColorBGR, u_int bgColorBGR)
+{
+  u_char cols = col;
+  while (*string) {
+    drawChar8x12(cols, row, *string++, fgColorBGR, bgColorBGR);
+    cols += 9;
+  }
+}
+
 void drawString11x16(u_char col, u_char row, char *string,
 		     u_int fgColorBGR, u_int bgColorBGR)
 {
   u_char cols = col;
   while (*string) {
-    drawChar11x16(cols, row, *string++, fgColorBRG, bgColorBGR);
+    drawChar11x16(cols, row, *string++, fgColorBGR, bgColorBGR);
     cols += 12;
   }
 }

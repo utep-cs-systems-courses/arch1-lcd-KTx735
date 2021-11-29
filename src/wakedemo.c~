@@ -134,39 +134,47 @@ void main()
 void
 draw_stuff()
 {
-  drawString5x7(10, 20, "Surprise", COLOR_WHITE, COLOR_RED);
-  drawString5x7(10, 40, "Change", COLOR_WHITE, COLOR_RED);
+  drawString5x7(10, 20, "LCD", COLOR_WHITE, COLOR_RED);
+  drawString5x7(10, 40, "Draw", COLOR_WHITE, COLOR_RED);
   drawString5x7(10, 60, "Sound", COLOR_WHITE, COLOR_RED);
   drawString5x7(10, 80, "Clear", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,20, "LCD", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,40, "Draw", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,60, "Clear", COLOR_WHITE, COLOR_RED);
+  //drawString8x12(10,80, "Clear", COLOR_WHITE, COLOR_RED);
+  //drawString11x16(10, 20, "LCD", COLOR_WHITE, COLOR_RED);
+  //drawString11x16(10, 40, "Draw", COLOR_WHITE, COLOR_RED);
+  //drawString11x16(10, 60, "Sound", COLOR_WHITE, COLOR_RED);
+  // drawString11x16(10, 80, "Clear", COLOR_WHITE, COLOR_RED);
 }
 
-unsigned char center = 0;
+unsigned char move = 50;
 
 void
 update_shape()
 {
   switch (button){
   case 1:
-    if(center <= 60){
-      if(center == 0){
+    if(move <= 120){
+      if(move == 50){
 	clearScreen(COLOR_BLUE);
       }
-      drawDiamond(center, COLOR_YELLOW);
-      center++;
+      drawDiamond(move, COLOR_GREEN);
+      move++;
     }
     else{
       clearScreen(COLOR_BLUE);
-      center = 0;
+      move = 50;
     }
     break;
   case 2:
-    if(center >= 0 && center <= 60){
-      drawDiamond(center, COLOR_YELLOW);
-      center--;
+    if(move >= 50 && move <= 120){
+      drawDiamond(move, COLOR_GREEN);
+      move--;
     }
     else{
       clearScreen(COLOR_BLUE);
-      center = 60;
+      move = 120;
     }
   case 3:
     clearScreen(COLOR_BLUE);
@@ -267,7 +275,7 @@ void
 counter()
 {
   second_counter++;
-  if(second_counter >= 15)
+  if(second_counter >= 120)
     {
       if(!cpuOff)
 	{
@@ -294,7 +302,7 @@ restart_val()
 
   buzzer_set_period(0);
   led_controller(0);
-  center = 0;
+  move = 50;
   cpuOff = 1;
   if(button == 4){
     clearlcd();
@@ -312,7 +320,7 @@ void update_clear(){
   dim = 0;
 
   if(button == 0 || button > 2){
-    center = 0;
+    move = 50;
   }
   button = 0;
   cpuOff = 1;
