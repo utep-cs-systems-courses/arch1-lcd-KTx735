@@ -7,13 +7,16 @@
 #include "sound.h"
 
 // WARNING: LCD DISPLAY USES P1.0.  Do not touch!!! 
-// #define LED BIT6/* note that bit zero req'd for display */
+#define LED BIT6             /* note that bit zero req'd for display */
+
 #define SW1 1
 #define SW2 2
 #define SW3 4
 #define SW4 8
+
 #define SWITCHES 15
 
+int switches = 0;
 int cycle = 500;
 char state = 0;
 
@@ -36,7 +39,6 @@ void switch_init()/* setup switch */
   switch_update_interrupt_sense();
 }
 
-int switches = 0;
 int press = 0;
 short redrawScreen = 1;
 
@@ -59,6 +61,8 @@ void wdt_c_handler()
 
 void update_shape();
 void draw_stringstuff();
+void silence();
+void squareface(u_int color);
 
 void main()
 {
@@ -71,7 +75,7 @@ void main()
 
   enableWDTInterrupts();      /* enable periodic interrupt */
   or_sr(0x8);              /* GIE (enable interrupts) */
-  u_char width = screenWidth, height = screenHeight;
+  
   clearScreen(COLOR_BLUE);
   while (1) {/* forever */
     if (redrawScreen) {
@@ -87,60 +91,51 @@ void main()
 u_int color0 = COLOR_BLACK;
 u_int color1 = COLOR_GREEN;
 u_int color2 = COLOR_PINK;
+u_int color3 = COLOR_BLUE;
+u_int color4 = COLOR_RED;
+u_int color5 = COLOR_PURPLE;
 u_int move = 0;
-u_char step = 0;
 
 void update_shape()
 {
-  if(switches & SW4){
-  while(1){
- switch(move){
-  case 0:
-  fillRectangle(10,10,110,110,COLOR_ORANGE);
-  fillRectangle(20,20,35,35,color0);
-  fillRectangle(75,20,35,35,color0);
-  fillRectangle(25,80,20,30,color0);
-  fillRectangle(85,80,20,30,color0);
-  fillRectangle(25,100,80,10,color0);
-  move = 1;
-  case 1:
-    clearScreen(COLOR_BLUE);
-    move = 2;
-  case 2:
-    fillRectangle(10,10,110,110,COLOR_ORANGE);
-    fillRectangle(20,20,35,35,color1);
-    fillRectangle(75,20,35,35,color1);
-    fillRectangle(25,80,20,30,color1);
-    fillRectangle(85,80,20,30,color1);
-    fillRectangle(25,100,80,10,color1);
-    move = 3;
-  case 3:
-    clearScreen(COLOR_BLUE);
-    move = 4;
-  case 4:
-    fillRectangle(10,10,110,110,COLOR_ORANGE);
-    fillRectangle(20,20,35,35,color2);
-    fillRectangle(75,20,35,35,color2);
-    fillRectangle(25,80,20,30,color2);
-    fillRectangle(85,80,20,30,color2);
-    fillRectangle(25,100,80,10,color2);
-    move = 5;
-  case 5:
-    clearScreen(COLOR_BLUE);
-    move = 0;
-   }
-  }
-  }if(switches & SW3){
+  if(switches & SW1){
+  squareface(color1);
+  squareface(color0);
+  squareface(color3);
+  squareface(color5);
+  squareface(color4);
+  }if(switches & SW2){
+    //drawString11x16(10, 20, "TEST", COLOR_WHITE, COLOR_BLUE);
+    squareface(color1);
     sound();
+  }if(switches & SW3){
+    silence();
+    draw_stringstuff();
+  }else{
+    squareface(color5);
   }
 }
 
 void draw_stringstuff()
 {
-  drawString8x12(10,20, "STUFF", COLOR_WHITE, COLOR_BLUE);
-  drawString8x12(10,40, "STUFF", COLOR_WHITE, COLOR_BLUE);
-  drawString8x12(10,60, "STUFF", COLOR_WHITE, COLOR_BLUE);
-  drawString8x12(10,80, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString11x16(10,20, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString11x16(10,40, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString11x16(10,60, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString11x16(10,80, "STUFF", COLOR_WHITE, COLOR_BLUE);
+}
+
+void squareface(u_int color)
+{
+    fillRectangle(10,10,110,110,COLOR_ORANGE);
+    fillRectangle(20,20,35,35,color);
+    fillRectangle(75,20,35,35,color);
+    fillRectangle(25,80,20,30,color);
+    fillRectangle(85,80,20,30,color);
+    fillRectangle(25,100,80,10,color);
+}
+
+void silence(){
+  buzzer_set_period(0);
 }
 
 /* Switch on S2 */

@@ -1,9 +1,0 @@
-#ifndef song_included
-#define song_included
-
-extern int period;
-extern char song_state;
-
-void sound();
-
-#endif
