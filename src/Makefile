@@ -1,5 +1,4 @@
 # makfile configuration
-
 CPU             	= msp430g2553
 CFLAGS          	= -mmcu=${CPU} -Os -I../h
 LDFLAGS		= -L../lib -L/opt/ti/msp430_gcc/include/
@@ -8,16 +7,17 @@ LDFLAGS		= -L../lib -L/opt/ti/msp430_gcc/include/
 CC              = msp430-elf-gcc
 AS              = msp430-elf-gcc -mmcu=${CPU} -c
 
-all:wakedemo-c.elf
+all:wakedemo.elf
 
-wakedemo-c.elf: ${COMMON_OBJECTS} wakedemo.o wdt_handler.o buzzer.o led_controller.o
+#additional rules for files
+wakedemo.elf: ${COMMON_OBJECTS} wakedemo.o wdt_handler.o buzzer.o sound.o
 	${CC} ${CFLAGS} ${LDFLAGS} -o $@ $^ -lTimer -lLcd
 
-load: wakedemo-c.elf
+load: wakedemo.elf
 	msp430loader.sh $^
 
 clean:
 	rm -f *.o *.elf
 
 buzzer.o: buzzer.h
-led_controller.o: led.h
+sound.o: sound.h

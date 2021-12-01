@@ -4,354 +4,149 @@
 #include "lcddraw.h"
 #include "buzzer.h"
 #include "led.h"
+#include "sound.h"
 
 // WARNING: LCD DISPLAY USES P1.0.  Do not touch!!! 
-
-// #define LED BIT6		/* note that bit zero req'd for display */
-
+// #define LED BIT6/* note that bit zero req'd for display */
 #define SW1 1
 #define SW2 2
 #define SW3 4
 #define SW4 8
-
 #define SWITCHES 15
 
-//Declare to avoid errors
-short redrawScreen = 0;
-int switches = 0;
-int button = 0;
-int cpuOff = 0;
+int cycle = 500;
+char state = 0;
 
-void draw_stuff();
-void update_shape();
-void clearlcd();
-void update_clear();
-
-void counter();
-void blinkCounter();
-void blinkUpdate();
-
-void
-led_init()
-{
-  P1DIR |= LEDS;
-  P1OUT &= ~LEDS;
-}
-
-
-static char 
-switch_update_interrupt_sense()
+static char switch_update_interrupt_sense()
 {
   char p2val = P2IN;
   /* update switch interrupt to detect changes from current buttons */
-  P2IES |= (p2val & SWITCHES);	/* if switch up, sense down */
-  P2IES &= (p2val | ~SWITCHES);	/* if switch down, sense up */
+  P2IES |= (p2val & SWITCHES);/* if switch up, sense down */
+  P2IES &= (p2val | ~SWITCHES);/* if switch down, sense up */
   return p2val;
 }
 
-void 
-switch_init()			/* setup switch */
-{  
-  P2REN |= SWITCHES;		/* enables resistors for switches */
-  P2IE |= SWITCHES;		/* enable interrupts from switches */
-  P2OUT |= SWITCHES;		/* pull-ups for switches */
-  P2DIR &= ~SWITCHES;		/* set switches' bits for input */
+void switch_init()/* setup switch */
+
+{
+  P2REN |= SWITCHES;/* enables resistors for switches */
+  P2IE |= SWITCHES;/* enable interrupts from switches */
+  P2OUT |= SWITCHES;/* pull-ups for switches */
+  P2DIR &= ~SWITCHES;/* set switches' bits for input */
   switch_update_interrupt_sense();
 }
 
-void
-switch_interrupt_handler()
+int switches = 0;
+int press = 0;
+short redrawScreen = 1;
+
+void switch_interrupt_handler()
 {
   char p2val = switch_update_interrupt_sense();
   switches = ~p2val & SWITCHES;
-  if (switches & SW4)
-    {
-      redrawScreen = 1;
-      button = 4;
-    }
-  if(switches & SW3)
-    {
-      redrawScreen = 1;
-      button = 3;
-    }
-  if (switches & SW2)
-    {
-      redrawScreen = 1;
-      button = 2;
-    }
-  if(switches & SW1)
-    {
-      redrawScreen = 1;
-      button = 1;
-    }
 }
 
-//This is trash code. I'll levae this just in case.
-// axis zero for col, axis 1 for row
-//short drawPos[2] = {10,10}, controlPos[2] = {10,10};
-//short velocity[2] = {3,8}, limits[2] = {screenWidth-36, screenHeight-8};
-//short redrawScreen = 1;
-//u_int controlFontColor = COLOR_GREEN;
-
-void time_update();
-
-//Check later
 void wdt_c_handler()
 {
-  time_update();
-}
+  static int secCount = 0;
   
-void update_shape();
+  secCount ++;
+  if (secCount >= 25) {/* 10/sec */
+    secCount = 0;
+    redrawScreen = 1;
+  }
+}
 
-//Copy from previous main.c
-//Can be incorporated in here
+void update_shape();
+void draw_stringstuff();
+
 void main()
 {
+  P1DIR |= LEDS;/* Green led on when CPU on */
+  P1OUT |= LEDS;
   configureClocks();
   lcd_init();
   switch_init();
-  led_init();
   buzzer_init();
-  enableWDTInterrupts();      /**< enable periodic interrupt */
-  or_sr(0x8);              /**< GIE (enable interrupts) */
 
-  clearlcd();
-
-  while(1)
-    {
-      if(redrawScreen)
-	{
-	  redrawScreen = 0;
-	  update_shape();
-	}
-      //This will turn the CPU off
-      or_sr(0x10);
-    }
-}
-
-//Use 5x7 for testing purpose
-//Change later to 8x12
-void
-draw_stuff()
-{
-  drawString5x7(10, 20, "LCD", COLOR_WHITE, COLOR_RED);
-  drawString5x7(10, 40, "Draw", COLOR_WHITE, COLOR_RED);
-  drawString5x7(10, 60, "Sound", COLOR_WHITE, COLOR_RED);
-  drawString5x7(10, 80, "Clear", COLOR_WHITE, COLOR_RED);
-  //drawString8x12(10,20, "LCD", COLOR_WHITE, COLOR_RED);
-  //drawString8x12(10,40, "Draw", COLOR_WHITE, COLOR_RED);
-  //drawString8x12(10,60, "Clear", COLOR_WHITE, COLOR_RED);
-  //drawString8x12(10,80, "Clear", COLOR_WHITE, COLOR_RED);
-  //drawString11x16(10, 20, "LCD", COLOR_WHITE, COLOR_RED);
-  //drawString11x16(10, 40, "Draw", COLOR_WHITE, COLOR_RED);
-  //drawString11x16(10, 60, "Sound", COLOR_WHITE, COLOR_RED);
-  // drawString11x16(10, 80, "Clear", COLOR_WHITE, COLOR_RED);
-}
-
-//More like blink
-unsigned char move = 50;
-
-void
-update_shape()
-{
-  switch (button){
-  case 1:
-    if(move <= 100){
-      if(move == 50){
-	clearScreen(COLOR_BLUE);
-      }
-      drawDiamond(move, COLOR_RED);
-      move++;
-    }
-    else{
-      clearScreen(COLOR_BLUE);
-      move = 50;
-    }
-    break;
-  case 2:
-    if(move >= 50 && move <= 100){
-      drawDiamond(move, COLOR_RED);
-      move--;
-    }
-    else{
-      clearScreen(COLOR_BLUE);
-      move = 100;
-    }
-  case 3:
-    clearScreen(COLOR_BLUE);
-    break;
-  default:
-    clearlcd();
-    break;
-  }
-}
-
-void
-clearlcd()
-{
+  enableWDTInterrupts();      /* enable periodic interrupt */
+  or_sr(0x8);              /* GIE (enable interrupts) */
+  u_char width = screenWidth, height = screenHeight;
   clearScreen(COLOR_BLUE);
-  draw_stuff();
-}
-
-int time_counter = 0;
-
-void
-normalTime()
-{
-  time_counter ++;
-  //10 sec
-  if (time_counter >= 15) {
-    if(!cpuOff){
-      time_counter = 0;
-      redrawScreen = 1;
-    }
-    else{
-      time_counter = 0;
+  while (1) {/* forever */
+    if (redrawScreen) {
       redrawScreen = 0;
-      cpuOff = 0;
+      update_shape();
     }
+    P1OUT &= ~LEDS;/* led off */
+    or_sr(0x10);/* CPU OFF */
+    P1OUT |= LEDS;/* led on */
   }
 }
 
-int second_counter = 0;
-int blink_counter = 0;
-int blink_limit = 0;
-int dim = 0;
+u_int color0 = COLOR_BLACK;
+u_int color1 = COLOR_GREEN;
+u_int color2 = COLOR_PINK;
+u_int move = 0;
+u_char step = 0;
 
-//Probably shold change for a real song
-//Nah, leave it as ugly sound
-//Probably need to change notes because it sounds all of them sound simillar
-int noise[] = {5405, 6802, 5102, 6060, 6802, 4049, 5405, 5102, 3610};
-
-void blinkUpdate()
+void update_shape()
 {
-  blink_counter++;
-  if(blink_counter >= blink_limit && noise[blink_limit] > 0)
-    {
-      blink_counter = 0;
-      buzzer_set_period(noise[blink_limit]);
-      if(!dim)
-	{
-	  led_controller(1);
-	}
-      else if(dim && blink_limit == 50)
-	{
-	  led_controller(3);
-	}
-      else
-	{
-	  led_controller(2);
-	}
-    }
-  else
-    {
-      led_controller(0);
-    }
-  counter();
-}
-
-//When the state is 4, it will stop
-void blinkCounter()
-{
-  second_counter++;
-  if (second_counter >= 3000) {
-    second_counter = 0;
-    if(!dim){
-      blink_limit++;
-      if (blink_limit >= 50){
-	dim = 1;
-      }
-    }
-    else{
-      blink_limit--;
-      if(blink_limit <= -1){
-	button = 4;
-      }
-    }
-  }
-}
-
-//Counter for blinks
-//This will move slow
-void
-counter()
-{
-  second_counter++;
-  if(second_counter >= 120)
-    {
-      if(!cpuOff)
-	{
-	  second_counter = 0;
-	  redrawScreen = 1;
-	}
-      else
-	{
-	  second_counter = 0;
-	  redrawScreen = 0;
-	  cpuOff = 0;
-	}
-    }
-}
-
-//This is a restart, leds and buzzer restart
-void
-restart_val()
-{
-  second_counter = 0;
-  blink_counter = 0;
-  blink_limit = 0;
-  dim = 0;
-
-  buzzer_set_period(0);
-  led_controller(0);
-  move = 50;
-  cpuOff = 1;
-  if(button == 4){
-    clearlcd();
-  }
-  else{
-    clearScreen(COLOR_BLUE);
-  }
-  button = 0;
-}
-
-void update_clear(){
-  second_counter = 0;
-  blink_counter = 0;
-  blink_limit = 0;
-  dim = 0;
-
-  if(button == 0 || button > 2){
-    move = 50;
-  }
-  button = 0;
-  cpuOff = 1;
-  clearScreen(COLOR_BLUE);
-  buzzer_set_period(0);
-  led_controller(0);
-}
-
-void time_update()
-{
-  switch(button){
+  if(switches & SW4){
+  while(1){
+ switch(move){
+  case 0:
+  fillRectangle(10,10,110,110,COLOR_ORANGE);
+  fillRectangle(20,20,35,35,color0);
+  fillRectangle(75,20,35,35,color0);
+  fillRectangle(25,80,20,30,color0);
+  fillRectangle(85,80,20,30,color0);
+  fillRectangle(25,100,80,10,color0);
+  move = 1;
   case 1:
+    clearScreen(COLOR_BLUE);
+    move = 2;
   case 2:
-    counter();
-    break;
+    fillRectangle(10,10,110,110,COLOR_ORANGE);
+    fillRectangle(20,20,35,35,color1);
+    fillRectangle(75,20,35,35,color1);
+    fillRectangle(25,80,20,30,color1);
+    fillRectangle(85,80,20,30,color1);
+    fillRectangle(25,100,80,10,color1);
+    move = 3;
   case 3:
-    blinkUpdate();
-    break;
+    clearScreen(COLOR_BLUE);
+    move = 4;
   case 4:
-    restart_val();
-    break;
+    fillRectangle(10,10,110,110,COLOR_ORANGE);
+    fillRectangle(20,20,35,35,color2);
+    fillRectangle(75,20,35,35,color2);
+    fillRectangle(25,80,20,30,color2);
+    fillRectangle(85,80,20,30,color2);
+    fillRectangle(25,100,80,10,color2);
+    move = 5;
+  case 5:
+    clearScreen(COLOR_BLUE);
+    move = 0;
+   }
   }
+  }if(switches & SW3){
+    sound();
+  }
+}
+
+void draw_stringstuff()
+{
+  drawString8x12(10,20, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString8x12(10,40, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString8x12(10,60, "STUFF", COLOR_WHITE, COLOR_BLUE);
+  drawString8x12(10,80, "STUFF", COLOR_WHITE, COLOR_BLUE);
 }
 
 /* Switch on S2 */
-void
-__interrupt_vec(PORT2_VECTOR) Port_2(){
-  if (P2IFG & SWITCHES) {	      /* did a button cause this interrupt? */
-    P2IFG &= ~SWITCHES;		      /* clear pending sw interrupts */
-    switch_interrupt_handler();	/* single handler for all switches */
+void __interrupt_vec(PORT2_VECTOR) Port_2(){
+  if (P2IFG & SWITCHES) {      /* did a button cause this interrupt? */
+    P2IFG &= ~SWITCHES;      /* clear pending sw interrupts */
+    switch_interrupt_handler();/* single handler for all switches */
   }
 }
