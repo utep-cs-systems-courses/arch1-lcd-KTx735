@@ -16,7 +16,7 @@ void sound()
 	break;
       case 2:
 	cycle = 2000;
-	state = 3;
+	state = 0;
 	break;
        default:
 	cycle = 1000;
