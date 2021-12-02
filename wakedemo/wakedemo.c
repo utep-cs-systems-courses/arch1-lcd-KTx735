@@ -2,6 +2,8 @@
 #include <libTimer.h>
 #include "lcdutils.h"
 #include "lcddraw.h"
+#include "buzzer.h"
+#include "sound.h"
 
 // WARNING: LCD DISPLAY USES P1.0.  Do not touch!!! 
 
@@ -35,6 +37,9 @@ switch_init()			/* setup switch */
 }
 
 int switches = 0;
+short update = 1;
+int cycle = 5000;
+char state = 0;
 
 void
 switch_interrupt_handler()
@@ -59,10 +64,18 @@ void wdt_c_handler()
   if (secCount >= 25) {		/* 10/sec */
     secCount = 0;
     redrawScreen = 1;
+    update = 1;
   }
 }
   
 void update_shape();
+void squareface(int step, int color);
+void button1();
+void button2();
+void button3();
+void button4();
+void defaultBehaviour();
+void buttonSelected();
 
 void main()
 {
@@ -72,6 +85,7 @@ void main()
   configureClocks();
   lcd_init();
   switch_init();
+  buzzer_init();
   
   enableWDTInterrupts();      /**< enable periodic interrupt */
   or_sr(0x8);	              /**< GIE (enable interrupts) */
@@ -80,7 +94,7 @@ void main()
   while (1) {			/* forever */
     if (redrawScreen) {
       redrawScreen = 0;
-      update_shape();
+      buttonSelected();
     }
     P1OUT &= ~LED;	/* led off */
     or_sr(0x10);	/**< CPU OFF */
@@ -97,14 +111,14 @@ update_shape()
   static char blue = 31, green = 0, red = 31;
   static unsigned char step = 0;
   if (switches & SW4) return;
-  if (step <= 60) {
+  if (step <= 10) {
     int startCol = col - step;
     int endCol = col + step;
     int width = 1 + endCol - startCol;
     // a color in this BGR encoding is BBBB BGGG GGGR RRRR
     unsigned int color = (blue << 11) | (green << 5) | red;
-    fillRectangle(startCol, row+step, width, 1, color);
-    fillRectangle(startCol, row-step, width, 1, color);
+    squareface(step, color);
+    squareface(step, color);
     if (switches & SW3) green = (green + 1) % 64;
     if (switches & SW2) blue = (blue + 2) % 32;
     if (switches & SW1) red = (red - 3) % 32;
@@ -115,6 +129,75 @@ update_shape()
   }
 }
 
+void squareface(int step, int color)
+{
+  //The first one is the background for face
+  fillRectangle(10, 10, 110, 110, COLOR_ORANGE);
+  fillRectangle(20, 20, 35+step, 35+step, color);
+  fillRectangle(75, 20, 35+step, 35+step, color);
+  fillRectangle(25, 80, 20+step, 30+step, color);
+  fillRectangle(85, 80, 20+step, 30+step, color);
+  fillRectangle(25, 100, 80+step, 10+step, color);
+}
+
+void button1()
+{
+  if(update)
+    {
+      update = 0;
+      //drawString5x7(10, 100, "Button1", COLOR_RED, COLOR_BLUE);
+      update_shape();
+      buzzer_set_period(0);
+    }
+}
+
+void button2()
+{
+  if(update)
+    {
+      update = 0;
+      drawString5x7(2, 125, "Do you hear the sound", COLOR_GREEN, COLOR_BLUE);
+      drawString5x7(2, 130, "?", COLOR_RED, COLOR_BLUE);
+      sound();
+    }
+}
+
+void button3()
+{
+  if(update)
+    {
+      update = 0;
+      drawString11x16(10, 140, "BIG DOG", COLOR_RED, COLOR_BLUE);
+      buzzer_set_period(0);
+    }
+}
+
+void button4()
+{
+  if(update)
+    {
+      clearScreen(COLOR_BLUE);
+      buzzer_set_period(0);
+    }
+}
+
+void defaultBehaviour()
+{
+  if(update)
+    {
+      update = 0;
+      drawString5x7(10, 160, "Default Behaviour", COLOR_RED, COLOR_BLUE);
+    }
+}
+
+void buttonSelected()
+{
+  if (switches & SW1) button1();
+  else if (switches & SW2) button2();
+  else if (switches & SW3) button3();
+  else if (switches & SW4) button4();
+  else defaultBehaviour();
+}
 
 /* Switch on S2 */
 void
